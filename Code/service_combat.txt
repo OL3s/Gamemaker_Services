@@ -1,0 +1,94 @@
+enum COMBAT_PHYSICAL {
+    SLASH,
+    PIERCE,
+    CRUSH,
+    HEAT,
+    COLD,
+    ACID,
+    COUNT
+}
+
+enum COMBAT_EFFECT {
+    HIT,
+    STUN,
+    SLOW,
+    BURN,
+    FREEZE,
+    COUNT
+}
+
+global.service_combat = {
+
+    init: function(_hp, _armor_physical, _armor_effect) {
+        var combat = {
+            health: _hp,
+            armor: {
+                physical: _armor_physical,
+                effect: _armor_effect
+            },
+            effects: global.service_combat.create_effect(),
+            image_blend: c_white,
+            image_yscale: 1
+        };
+        return combat;
+    },
+
+    create_physical: function(value_flat = 0) {
+        var physical = array_create(COMBAT_PHYSICAL.COUNT, value_flat);
+        for (var i = 1; i < argument_count; i += 2) {
+            physical[argument[i]] = argument[i + 1];
+        }
+        return physical;
+    },
+
+    create_effect: function(value_flat = 0) {
+        var effect = array_create(COMBAT_EFFECT.COUNT, value_flat);
+        for (var i = 1; i < argument_count; i += 2) {
+            effect[argument[i]] = argument[i + 1];
+        }
+        return effect;
+    },
+
+    update: function(combat) {
+        var sc = global.service_combat;
+        combat.image_blend = c_white;
+
+        if (combat.effects[COMBAT_EFFECT.HIT] > 0) {
+            combat.effects[COMBAT_EFFECT.HIT]--;
+            combat.image_blend = c_red;
+        }
+
+        if (combat.effects[COMBAT_EFFECT.BURN] > 0) {
+            combat.effects[COMBAT_EFFECT.BURN]--;
+            combat.image_blend = c_orange;
+
+            if (irandom(59) == 0) {
+                sc.hit_physical(combat, sc.create_physical(COMBAT_PHYSICAL.HEAT, 1));
+            }
+        }
+    },
+
+    hit_physical: function(combat, _physical, ignore_armor = false) {
+        var damage = 0;
+        for (var i = 0; i < COMBAT_PHYSICAL.COUNT; i++) {
+            var armor_factor = ignore_armor ? 1 : (100 / (100 + combat.armor.physical[i] * 4));
+            damage += _physical[i] * armor_factor;
+        }
+        damage = ceil(damage);
+        combat.health -= damage;
+        combat.effects[COMBAT_EFFECT.HIT] += damage;
+    },
+
+    hit_effect: function(combat, _effect) {
+        for (var i = 0; i < COMBAT_EFFECT.COUNT; i++) {
+            var reduced = _effect[i] * (100 / (100 + combat.armor.effect[i] * 4));
+            combat.effects[i] += ceil(reduced);
+        }
+    },
+
+    hit: function(combat, _physical, _effect) {
+        var sc = global.service_combat;
+        if (is_array(_physical)) sc.hit_physical(combat, _physical);
+        if (is_array(_effect)) sc.hit_effect(combat, _effect);
+    }
+};
