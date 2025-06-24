@@ -1,3 +1,5 @@
+/// @enum TOUCH
+/// TOUCH input types
 enum TOUCH {
 	VIEW,
 	GUI,
@@ -11,6 +13,14 @@ global.service_touch_several = {
 	drag_threshold: 16,
 	hold_time_ms: 400,
 	areas: [],
+	
+	/// @desc Adds a new touch area
+	/// @param {real} x - Top-left X of the area (ignored for FULL)
+	/// @param {real} y - Top-left Y of the area (ignored for FULL)
+	/// @param {real} w - Width of the area (ignored for FULL)
+	/// @param {real} h - Height of the area (ignored for FULL)
+	/// @param {TOUCH} touch_type - Type of touch: VIEW, GUI, or FULL
+	/// @returns {real} Area index
 	create_area: function(x, y, w, h, touch_type) {
 	    array_push(self.areas, {
 	        x: x,
@@ -31,6 +41,9 @@ global.service_touch_several = {
 	    return array_length(self.areas) - 1;
 	},
 
+	/// @desc Returns interaction state for a given area index
+	/// @param {real} index - Index returned by create_area
+	/// @returns {struct} Touch state
 	get: function(index) {
 	    var area = self.areas[index];
 	    var active_finger = -1;
@@ -158,7 +171,11 @@ global.service_touch_several = {
 	    };
 	},
 
-
+	/// @desc Debug draw function for touch area and analog info
+	/// @param {real} area_index - Area index to draw
+	/// @param {bool} enable_analog - Show analog direction/strength
+	/// @param {bool} enable_touch - Show touch circle and motion lines
+	/// @note Call in Draw event for VIEW/FULL, Draw GUI for GUI
 	draw: function(area_index, enable_analog = true, enable_touch = true) {
 	    var result = self.get(area_index);
 	    var area = self.areas[area_index];
