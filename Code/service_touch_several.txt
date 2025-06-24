@@ -1,15 +1,23 @@
+enum TOUCH {
+	VIEW,
+	GUI,
+	FULL,
+	COUNT
+}
+
 global.service_touch_several = {
 	analog_threshold: 32,
 	analog_deadzone: .2,
 	drag_threshold: 16,
 	hold_time_ms: 400,
 	areas: [],
-	create_area: function(x, y, w, h) {
+	create_area: function(x, y, w, h, touch_type) {
 	    array_push(self.areas, {
 	        x: x,
 	        y: y,
 	        w: w,
 	        h: h,
+			type: touch_type,
 	        finger_id: -1,
 	        _prev_down: false,
 	        _prev_x: 0,
@@ -33,13 +41,20 @@ global.service_touch_several = {
 
 	    var finger_max = 5;
 	    for (var i = 0; i < finger_max; i++) {
-	        var tx = device_mouse_x(i);
-	        var ty = device_mouse_y(i);
+			var tx = 0, ty = 0;
+			if (area.type == TOUCH.GUI) {
+			    tx = device_mouse_x_to_gui(i);
+			    ty = device_mouse_y_to_gui(i);
+			} else {
+			    tx = device_mouse_x(i);
+			    ty = device_mouse_y(i);
+			}
 	        var is_down = device_mouse_check_button(i, mb_left);
 	        var is_pressed = device_mouse_check_button_pressed(i, mb_left);
 
-	        var inside = (tx >= area.x && tx < area.x + area.w &&
-	                      ty >= area.y && ty < area.y + area.h);
+			var inside = (area.type == TOUCH.FULL) || 
+			             (tx >= area.x && tx < area.x + area.w &&
+			              ty >= area.y && ty < area.y + area.h);
 
 	        var is_valid_press = (area.finger_id == i) || (area.finger_id == -1 && is_pressed && inside);
 
